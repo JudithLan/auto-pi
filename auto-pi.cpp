@@ -18,7 +18,7 @@
 /*
 	Created by: Oscar Miranda-Dominguez
 
-	Description: This module uses a PI process to inject current to a cell, 
+	Description: This module uses a PI process to inject current to a cell,
 	it also does auto calculation of the best parameters per cell.
 */
 
@@ -35,15 +35,16 @@ static DefaultGUIModel::variable_t vars[] = {
 	{"State","Spike state variable (0 - 4)",DefaultGUIModel::INPUT,},
 
 	//OUTPUTS
-	{"Iout (A)","Current output (A)",DefaultGUIModel::OUTPUT,},  
+	{"Iout (A)","Current output (A)",DefaultGUIModel::OUTPUT,},
 	{"Target ISI (s)","Target Inter-spike interval (s)",DefaultGUIModel::OUTPUT,},
 	{"ISI (s)","Inter-spike interval (s)",DefaultGUIModel::OUTPUT,},
 
 	//PARAMETERS
-	{"Kp","Proportional Gain",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},   
+	{"Kp","Proportional Gain",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"Ti","Integral time (Gain/Ti)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"Td","Derivitive time (Gain*Td)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
-	{"Target ISI","Target inter-spike interval (s)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
+	//{"Target ISI","Target inter-spike interval (s)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
+	{"Target Heart Rate","Target Heart Rate in 1/min",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"ConstantCurrent","Constant current (pA)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"Increase (%)","% Current increase per step",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"Autotune","Autotune? (1=yes)",DefaultGUIModel::PARAMETER | DefaultGUIModel::INTEGER,},
@@ -52,8 +53,8 @@ static DefaultGUIModel::variable_t vars[] = {
 	//STATES
 	{"P","Proportional component (A)",DefaultGUIModel::STATE,},
 	{"I","Integrative component (A)",DefaultGUIModel::STATE,},
-	{"D","Derivative component (A)",DefaultGUIModel::STATE,}, 
-	{"CurrentState","Current output (A)",DefaultGUIModel::STATE,}, 
+	{"D","Derivative component (A)",DefaultGUIModel::STATE,},
+	{"CurrentState","Current output (A)",DefaultGUIModel::STATE,},
 };
 
 // some necessary variable
@@ -61,7 +62,7 @@ static size_t num_vars = sizeof(vars)/sizeof(DefaultGUIModel::variable_t);
 
 // provides default values for paramters, calls update(INIT)
 AutoPi::AutoPi(void) : DefaultGUIModel("Auto PI",::vars,::num_vars)
-{ 
+{
 	createGUI(vars, num_vars);
 	kp=2e-10;
 	ti=1e-8;
@@ -105,7 +106,7 @@ void AutoPi::execute(void)
 		output(0)=CurrentState;
 		return;
 	}
-	t += dt;    
+	t += dt;
 	state=(int)(input(0));
 	if (autotune==0) stage=0;
 	if (autotune==1) {
@@ -129,7 +130,7 @@ void AutoPi::execute(void)
 
 		if (t > Last_t_spike + 10*target) //The neuron hasn't fired in a long time, let's ramp up the current until it does.
 		{
-			if(state == 1) 
+			if(state == 1)
 			{
 				Current_t_spike = t;
 				Last_t_spike = t;
@@ -154,7 +155,7 @@ void AutoPi::execute(void)
 		{
 			Last_t_spike = Current_t_spike;
 			Current_t_spike = t;
-			t_spike = Current_t_spike - Last_t_spike;  
+			t_spike = Current_t_spike - Last_t_spike;
 			e = t_spike - target;
 			P = kp*e;
 			I = I +(ti*e*t_spike);
@@ -162,7 +163,7 @@ void AutoPi::execute(void)
 			pe = P;//OM, Jul 20, 2009
 			Last_t_spike = Current_t_spike;
 			// printf("error=%f, P=%f, I=%f, D=%f, ThisSpike=%f, LastSpike=%f\n",e,P,I,D,t_spike,Last_t_spike);
-		} 
+		}
 		CurrentState=ConstantCurrent+P+I+D;
 		break;
 
@@ -171,7 +172,7 @@ void AutoPi::execute(void)
 			if (counter<20) {
 				Last_t_spike = Current_t_spike;
 				Current_t_spike = t;
-				t_spike = Current_t_spike - Last_t_spike;  
+				t_spike = Current_t_spike - Last_t_spike;
 				ISIs[counter]=t_spike;
 				counter=counter+1;
 				if (counter==20) stage =2;
@@ -317,17 +318,17 @@ void AutoPi::execute(void)
 		*/
 		break;
 	}
-	
+
 	if(CurrentState>4e-9) CurrentState=4e-9;
 	output(0)=CurrentState;
-	output(1)=target;  
+	output(1)=target;
 	output(2)=t_spike;
 }
 
 
 void AutoPi::update(DefaultGUIModel::update_flags_t flag)
 {
-	switch(flag) 
+	switch(flag)
 	{
 	case INIT:
 		setParameter("Kp",kp);
@@ -345,14 +346,14 @@ void AutoPi::update(DefaultGUIModel::update_flags_t flag)
 		break;
 
 	case MODIFY:
-		kp = getParameter("Kp").toDouble(); 
+		kp = getParameter("Kp").toDouble();
 		ti = getParameter("Ti").toDouble();
 		td = getParameter("Td").toDouble();
 		target = getParameter("Target ISI").toDouble();
 		HoldOn = getParameter("Hold").toDouble();
 		OldConstantCurrent=ConstantCurrent;
 		ConstantCurrent = getParameter("ConstantCurrent").toDouble()*1e-12;// if (flag!=PAUSE) ConstantCurrent=CurrentState;//just this added avoid return to constant current when you change ISI
-		if (OldConstantCurrent!=ConstantCurrent) CurrentState=ConstantCurrent;   
+		if (OldConstantCurrent!=ConstantCurrent) CurrentState=ConstantCurrent;
 		else ConstantCurrent=CurrentState;
 		//OldConstantCurrent=ConstantCurrent;
 		increase = getParameter("Increase").toDouble();
@@ -362,9 +363,9 @@ void AutoPi::update(DefaultGUIModel::update_flags_t flag)
 		I=0;
 		D=0;
 		pe=0;            //reset the previous error (used in the derivitive)
-		t=0;   
-		Last_t_spike=0;  
-		Current_t_spike=0; 
+		t=0;
+		Last_t_spike=0;
+		Current_t_spike=0;
 		break;
 
 	case PAUSE:
@@ -380,7 +381,7 @@ void AutoPi::update(DefaultGUIModel::update_flags_t flag)
 	case UNPAUSE:
 		break;
 
-	case PERIOD: 
+	case PERIOD:
 		break;
 	/*
 	case HOLD:
