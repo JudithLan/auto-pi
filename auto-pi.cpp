@@ -401,4 +401,5 @@ void AutoPi::update(DefaultGUIModel::update_flags_t flag)
 	//printf("Target ISI = %f\n",target);
 	dt = RT::System::getInstance()->getPeriod()*1e-9;
 	//printf("dT=%f\n",dt);
+	//test
 }
