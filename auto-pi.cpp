@@ -43,6 +43,7 @@ static DefaultGUIModel::variable_t vars[] = {
 	{"Kp","Proportional Gain",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"Ti","Integral time (Gain/Ti)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"Td","Derivitive time (Gain*Td)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
+	//Modification
 	//{"Target ISI","Target inter-spike interval (s)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"Target Heart Rate","Target Heart Rate in 1/min",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
 	{"ConstantCurrent","Constant current (pA)",DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,},
